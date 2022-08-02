@@ -1,0 +1,89 @@
+module tb;
+  reg         clk, in, rstn;
+  wire        out;
+  integer     i;
+  reg [15:0]  data;
+  
+  always #10 clk = ~clk;
+  
+  det_1011 u0(.clk(clk),.rstn(rstn),.in(in),.out(out));
+  
+  initial begin
+    $monitor("i=%0d, Time=%0d, rstn=%b, in=%b, out=%b", i, $time, rstn, in, out);
+    $dumpfile("tb.vcd");
+    $dumpvars(1, tb);
+    
+    clk = 0;
+    rstn = 0;
+    #50  rstn =1;
+    data = 16'b111010110110111011;
+    i=0;
+    #400   $finish;
+  end
+  
+  always @ (posedge clk) begin
+    in  = data >> i;
+    i = i+1;
+  end
+endmodule
+    
+    
+    // Code your design here
+module det_1011(input clk,input rstn,input in, output reg out);
+  parameter s0 = 0,
+  s1 = 1,
+  s10 = 2,
+  s101 = 3;
+  reg[2:0]cur_state,next_state;
+
+  always @(posedge clk)begin 
+    if(!rstn)
+      cur_state<=s0;
+    else
+      cur_state <= next_state;
+  end
+  always @(cur_state or in)begin
+    case(cur_state)
+      s0 : begin
+        if(in) begin
+          next_state = s1;
+          out = 0;
+        end
+        else begin 
+          next_state = s0;
+          out = 0;
+        end
+      end
+      s1 : begin
+        if(in) begin 
+          next_state = s101;
+          out = 0;
+        end
+          else begin
+            next_state = s10;
+            out = 0;
+          end
+      end
+      s10 : begin
+        if(in) begin 
+          next_state = s101;
+          out = 0;
+        end
+        else begin
+          next_state = s0;
+          out = 0;
+        end
+      end
+      s101 : begin
+        if(in) begin 
+          next_state = s1;
+          out = 1;
+        end
+        else begin
+          next_state = s10;
+          out = 0;
+        end
+      end
+    endcase
+  end
+endmodule
